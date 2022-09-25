@@ -1,0 +1,6 @@
+^renv$
+^renv\.lock$
+^cran-comments\.md$
+^README\.Rmd$
+^LICENSE\.md$
+^data-raw$
