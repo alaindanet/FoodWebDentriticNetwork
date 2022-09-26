@@ -1,0 +1,309 @@
+---
+title: "Effect of"
+subtitle: "abiotic stress and positive interactions on"
+subtitle2: "Species interactions, Species coexistence & Ecosystem-functioning"
+subtitle3: ""
+author: "Alain Danet"
+output:
+  xaringan::moon_reader:
+    seal: false
+    self_contained: true
+    css: ["default", "xaringan-themer.css", "custom.css"]
+    nature:
+      ratio: "16:9"
+---
+
+class: title-slide, left, inverse, middle
+
+.left[
+# `r rmarkdown::metadata$title` <br> `r rmarkdown::metadata$subtitle` <br> `r rmarkdown::metadata$subtitle2` 
+]
+
+.right[
+## `r rmarkdown::metadata$author`, PhD
+]
+
+<div style = "position:fixed; visibility: hidden">
+$$\require{color}\definecolor{red}{rgb}{220, 0, 0}$$
+$$\require{color}\definecolor{green}{rgb}{145, 0, 255}$$
+$$\require{color}\definecolor{blue}{rgb}{0, 0, 1}$$
+</div>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: {
+    Macros: {
+      red: ["{\\color{red}{#1}}", 1],
+      green: ["{\\color{green}{#1}}", 1],
+      blue: ["{\\color{blue}{#1}}", 1]
+    },
+    loader: {load: ['[tex]/color']},
+    tex: {packages: {'[+]': ['color']}}
+  }
+});
+</script>
+
+<style>
+.red {color: #DC0000;}
+.green {color: #009100FF;}
+.blue {color: #0000FF;}
+</style>
+
+
+
+```{r flair_color, echo=FALSE, include=FALSE}
+library(flair)
+red <- "#DC0000"
+green <- "#009100FF"
+blue <- "#0000FF"
+```
+
+```{r packages, include=FALSE, warning=FALSE}
+library(tidyverse)
+library(magrittr)
+library(cowplot)
+library(sf)
+library(mapview)
+library(targets)
+```
+
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, htmltools.preserve.raw = FALSE)
+knitr::opts_chunk$set(
+  fig.asp = .6, fig.retina = 3,
+  out.width = "70%",
+  fig.align = "center",
+  dev.args = list(bg = "transparent"),
+  cache = FALSE,
+  echo = FALSE,
+  include = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  hiline = TRUE
+)
+theme_set(theme_half_open())
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+#library(xaringancolor)
+style_duo_accent(
+  primary_color = "#1381B0",
+  secondary_color = "#FF961C",
+  inverse_header_color = "#FFFFFF",
+  inverse_text_color = "#FFFFFF",
+  footnote_font_size = "0.9em",
+  footnote_position_bottom = "60px",
+  title_slide_background_color = "#FF961C",
+  title_slide_text_color = "#FFFFFF",
+  extra_css = list(
+  ".small" = list("font-size" = "90%"),
+  ".full-width" = list(
+    display = "flex",
+    width   = "100%",
+    flex    = "1 1 auto"),
+  ".remark-slide-number" = list(
+    "font-size" = "10pt",
+    "margin-bottom" =  "-11.6px",
+    "margin-right" =  "10px",
+    "color" = "#000000",
+    "opacity" =  1#; /* default: 0.5 */
+    ),
+  
+".right-column h2, .right-column h3" = list(
+  "padding-top" = "0px",
+  "padding-bottom" = "0px"
+  ),
+  ".ol, .li" = list(
+  "padding" = "5px 0px"
+   )
+  )
+)
+
+#setup_colors(
+#  red = "red",
+#  green = "green",
+#  blue = "blue"
+#)
+```
+
+---
+class: middle
+
+# Riverine fish communities dataset (France) 
+ 
+.pull-left[
+- Standardized since 1995
+- Electrofishing
+- Various Protocols (dep. on river characteristics, sampling objective)
+- Stunning features: sampling consistency & individual body size
+]
+
+---
+class: middle, center
+
+# Sampling Protocols
+
+.pull-left[
+## Complete (small streams)
+
+```{r, out.width = "100%"}
+knitr::include_graphics("~/Documents/thesis/talks/fishcom_fig/complete_fish_protocol.png")
+```
+]
+
+.pull-right[
+## Partial (big streams)
+
+```{r, out.width = "100%"}
+knitr::include_graphics("~/Documents/thesis/talks/fishcom_fig/point_fish_protocol.png")
+```
+]
+
+---
+
+```{r, out.height = "100%"}
+knitr::include_graphics("~/Documents/post-these/mnhn/fishcom/manuscript/bef_stability/figs/length_inference.png")
+```
+
+
+
+
+```{r}
+out <- vector("character", length = 5)
+for (p in seq(1, 5)) {
+  out[p] <- paste0("\n\n---\n\n```{r net-inf",p,", message=FALSE, warning=FALSE, results='asis'}\nknitr::include_graphics('~/Documents/post-these/mnhn/fishcom/manuscript/bef_stability/figs/network_inference", p ,".png')\n```\n")
+}
+```
+
+<!--- knit those table chunk statements --> 
+`r paste(knitr::knit(text = out), collapse = '\n')`
+
+---
+class: center
+
+```{r, cache = TRUE, out.with = "100%", out.height = "80%"}
+source("https://raw.githubusercontent.com/alaindanet/fishcom/master/R/codeWeb.R")
+source("https://raw.githubusercontent.com/alaindanet/fishcom/master/R/plot_methods.R")
+tar_load(c(metaweb, network_metrics))
+sp_color <- set_color_species(
+  node_list = colnames(metaweb$metaweb),
+  resource_list = metaweb$resource
+)
+node_sp <- str_extract(colnames(metaweb$metaweb), "[A-Z|a-z]*")
+names(sp_color)[names(sp_color) %in% metaweb$resource] <- 
+  c("detritivore", "biofilm", "phytobenthos", "macrophage", "phytoplankton", "zooplankton", "zoobenthos")
+TL <- NetIndices::TrophInd(metaweb$metaweb)$TL
+metaweb_indic <- NetIndices::GenInd(metaweb$metaweb)
+```
+
+.pull-left[
+## Metaweb structure  
+- `r length(metaweb$species)` species
+- TL: `r mean(TL)`, `r max(TL)` (mean, max) 
+- N: `r metaweb_indic$N`, L: `r metaweb_indic$Ltot`  
+- Connectance: `r metaweb_indic$C`
+]
+
+.pull-right[
+```{r, out.width = "100%"}
+PlotWeb(
+  TL = TL,
+  webTL = metaweb$metaweb,
+  colnode = sp_color[node_sp],
+  abund = 6,
+  collink="grey90",
+  scale_abun = .01
+) 
+legend(
+#  x      = 0.031,
+#  y      = 4,
+  x      = "bottom",
+  inset = -.25,
+  legend = names(sp_color),
+  pch    = 21,
+  col    = "#777777",
+  pt.bg  = sp_color,
+  pt.cex = 0.7,
+  cex    = .5,
+  bty    = "n",
+  x.intersp = 1,
+  text.width = .1,
+  ncol   = 6
+)
+```
+]
+
+---
+# Local networks
+
+.pull-left[
+## Inference
+- For each sampling event: 
+  1. Identification of the trophic species
+  1. Subsample the metaweb
+]
+
+.pull-right[
+## Outcome
+- `r nrow(network_metrics)` local networks 
+- `r length(unique(network_metrics$station))` sites 
+]
+
+
+
+---
+# Local network metrics
+
+```{r, out.height = "100%"}
+network_metrics %>%
+  select(opcod, max_troph_lvl, connectance, nbnode, weighted_avg_obs_tlvl) %>%
+  pivot_longer(-opcod, names_to = "metric", values_to = "value") %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(vars(metric), scales = "free_x", nrow = 2)
+```
+
+
+---
+class: middle, center
+
+```{r, out.width = "100%", out.height = "100%"}
+tar_load(c(op_st_filtered, com_metrics))
+
+com_metrics_st <- com_metrics %>%
+  left_join(op_st_filtered$op, by = "opcod") %>%
+  group_by(station) %>%
+  summarise(
+    begin = min(lubridate::year(date)),
+    end = max(lubridate::year(date)),
+    nsampling = n(),
+    protocol = unique(protocol),
+    med_richness = median(richness),
+    med_biomass = median(biomass),
+    med_nind = median(nind),
+    .groups = "drop"
+  )
+net_metrics_st <- network_metrics %>%
+  group_by(station) %>%
+  summarise(
+    med_connectance = median(connectance),
+    med_max_tlvl = median(max_troph_lvl),
+    med_nbnode = median(nbnode),
+    med_w_avg_tlvl = median(weighted_avg_obs_tlvl),
+    .groups = "drop"
+  )
+
+st_to_plot <- op_st_filtered$station %>%
+  select(station, libelle_sandre, town) %>%
+  left_join(com_metrics_st, by = "station") %>%
+  left_join(net_metrics_st, by = "station")
+
+mapview(st_to_plot, zcol = c("protocol", "nsampling", "med_richness",
+    "med_biomass", "med_nind", "med_richness", "med_max_tlvl", "med_w_avg_tlvl"))
+```
+
+---
+

@@ -5,6 +5,7 @@ source("./packages.R")
 lapply(list.files("./R", full.names = TRUE), source)
 # Building community metrics
 source("https://raw.githubusercontent.com/alaindanet/fishcom/master/R/community_analysis.R")
+source("https://raw.githubusercontent.com/alaindanet/fishcom/master/R/codeWeb.R")
 
 # Where the fish data lives
 fishcom_path <- "~/Documents/post-these/mnhn/fishcom/"
@@ -239,5 +240,9 @@ tar_plan(
       length_chunk = 200,
       max_dist = 1000
         )
-  )
+  ),
+
+
+# report 
+tar_render(talk, "doc/slides.Rmd")
 )

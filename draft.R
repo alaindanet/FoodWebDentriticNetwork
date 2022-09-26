@@ -1,10 +1,11 @@
 library(tidyverse)
 library(magrittr)
 library(sizeTrophicInteractions)
+library(targets)
+library(sf)
 
 tar_load(c(network))
 
-library(sf)
 tar_load(c(station, op, op_desc, op_env))
 station
 
@@ -17,7 +18,6 @@ mapview(station)
 
 tar_load(op_st_filtered)
 op_st_filtered$station
-library(sf)
 
-library("googledrive")
-drive_find()
+tar_load(c(hydroriver_shp_files, snapped_site_river))
+hydroriver <- read_sf(hydroriver_shp_files)

@@ -1,4 +1,4 @@
-renv::init()
+#renv::init()
 renv::activate()
 renv::snapshot()
 
@@ -43,4 +43,30 @@ file.copy(
 
 zip(
   zipfile = paste0(str_remove(data_rep, "/$"), ".zip"),
-  files = dir(str_remove(data_rep, "/$"), full.names = TRUE))
+  files = dir(str_remove(data_rep, "/$"), full.names = TRUE)
+)
+
+# For my repo
+myrepo <- "~/Documents/post-these/mnhn/FoodWebDentriticNetwork/"
+dir.create(paste0(myrepo, "data"), recursive = TRUE)
+dir.create(paste0(myrepo, "data-raw/fishing_op_build"), recursive = TRUE)
+file.copy(
+  from = paste0(fishcom_path, file_cut),
+  to = paste0(myrepo, file_cut)
+)
+
+unzip(zipfile = "~/Téléchargements/HydroRIVERS_v10_eu_shp.zip",
+  exdir = here::here("data-raw"))
+unzip(zipfile = "~/Téléchargements/RiverATLAS_Data_v10_shp.zip",
+  exdir = here::here("data-raw"))
+
+library(tflow)
+use_rmd("talk")
+dir.create(here::here("doc", "fig"))
+file.copy(
+  from = c(
+    "~/Documents/post-these/applications/ambizione/presentation/custom.css",
+    "~/Documents/post-these/applications/ambizione/presentation/slides.Rmd"
+    ),
+  to = here::here("doc"))
+

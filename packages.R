@@ -14,3 +14,4 @@ library(furrr)
 
 # Conflict
 conflict_prefer("filter", "dplyr")
+library(rmarkdown)
