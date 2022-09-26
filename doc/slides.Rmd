@@ -199,16 +199,16 @@ TL <- NetIndices::TrophInd(metaweb$metaweb)$TL
 metaweb_indic <- NetIndices::GenInd(metaweb$metaweb)
 ```
 
-.pull-left[
+.left-column[
 ## Metaweb structure  
 - `r length(metaweb$species)` species
-- TL: `r mean(TL)`, `r max(TL)` (mean, max) 
+- TL: `r round(mean(TL), 1)`, `r round(max(TL), 1)` (mean, max) 
 - N: `r metaweb_indic$N`, L: `r metaweb_indic$Ltot`  
-- Connectance: `r metaweb_indic$C`
+- Connectance: `r round(metaweb_indic$C, 2)`
 ]
 
-.pull-right[
-```{r, out.width = "100%"}
+.right-column[
+```{r, out.height = "80%", out.width = "100%"}
 PlotWeb(
   TL = TL,
   webTL = metaweb$metaweb,
@@ -216,7 +216,7 @@ PlotWeb(
   abund = 6,
   collink="grey90",
   scale_abun = .01
-) 
+)
 legend(
 #  x      = 0.031,
 #  y      = 4,

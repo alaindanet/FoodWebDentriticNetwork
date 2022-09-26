@@ -239,10 +239,35 @@ tar_plan(
       proj_crs =  4326,
       length_chunk = 200,
       max_dist = 1000
-        )
-  ),
+    )
+    ),
+  tar_target(riveratlas_shp_files,
+    here::here("data-raw", "RiverATLAS_v10_shp", "RiverATLAS_v10_eu.shp"),
+    format = "file"),
+  tar_target(riveratlas_station, {
+
+    to_select <- setNames(
+      unique(c("HYRIV_ID", "LENGTH_KM", "DIST_UP_KM", "ORD_STRA", "ORD_FLOW",
+          get_river_atlas_significant_var(), get_land_class_var())),
+      NULL)
+
+    layer_name <- sf::st_layers(riveratlas_shp_files, do_count = TRUE)$name
+    myquery <- paste0(
+      "SELECT ",
+      paste0(to_select[!to_select %in% c("length_km", "dist_up_km", "ord_stra", "ord_flow", "hft_ix_c9309_ratio", "hft_ix_c9309_log2_ratio")], collapse = ", "),
+      " FROM ", layer_name, " WHERE HYRIV_ID IN ",
+      "(",
+      paste0(na.omit(snapped_site_river$riverid), collapse = ","),
+      ")"
+    )
+    sf::read_sf(dsn = riveratlas_shp_files, query = myquery) %>%
+      mutate(riverid = HYRIV_ID) %>%
+      janitor::clean_names() %>%
+      left_join(select(st_drop_geometry(snapped_site_river), station, riverid), by = "riverid")
+    }),
 
 
-# report 
-tar_render(talk, "doc/slides.Rmd")
+
+  # report
+  tar_render(talk, "doc/slides.Rmd")
 )

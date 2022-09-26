@@ -70,3 +70,5 @@ file.copy(
     ),
   to = here::here("doc"))
 
+library(devtools)
+use_r("variable_shortcut")
