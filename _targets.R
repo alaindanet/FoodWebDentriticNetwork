@@ -266,8 +266,15 @@ tar_plan(
       left_join(select(st_drop_geometry(snapped_site_river), station, riverid), by = "riverid")
     }),
 
-
-
   # report
-  tar_render(talk, "doc/slides.Rmd")
+  #tar_render(talk, "doc/slides.Rmd"),
+
+  #export
+  tar_target(export, {
+    save(fish_length, metaweb, network, com_species, com_metrics, com_trophic_species, network_mat, network_metrics, op_st_filtered, riveratlas_station,
+      file = "~/Téléchargements/web_in_web.rda"
+      )
+    return("lololo") # trick for a happy targets
+    }, format = "file")
+
 )

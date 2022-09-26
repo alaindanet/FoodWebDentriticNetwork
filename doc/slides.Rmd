@@ -1,8 +1,7 @@
 ---
-title: "Effect of"
-subtitle: "abiotic stress and positive interactions on"
-subtitle2: "Species interactions, Species coexistence & Ecosystem-functioning"
-subtitle3: ""
+title: "Webs in Webs"
+subtitle: "Empirical data"
+subtitle2: "Riverine fish communities"
 author: "Alain Danet"
 output:
   xaringan::moon_reader:
@@ -16,11 +15,12 @@ output:
 class: title-slide, left, inverse, middle
 
 .left[
-# `r rmarkdown::metadata$title` <br> `r rmarkdown::metadata$subtitle` <br> `r rmarkdown::metadata$subtitle2` 
+# `r rmarkdown::metadata$title` - `r rmarkdown::metadata$subtitle`  
 ]
 
 .right[
-## `r rmarkdown::metadata$author`, PhD
+# `r rmarkdown::metadata$subtitle2`
+## `r rmarkdown::metadata$author`
 ]
 
 <div style = "position:fixed; visibility: hidden">
@@ -83,7 +83,10 @@ knitr::opts_chunk$set(
   warning = FALSE,
   hiline = TRUE
 )
-theme_set(theme_half_open())
+theme_set(
+  theme_half_open() +
+    background_grid()
+)
 ```
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
@@ -208,7 +211,7 @@ metaweb_indic <- NetIndices::GenInd(metaweb$metaweb)
 ]
 
 .right-column[
-```{r, out.height = "80%", out.width = "100%"}
+```{r, out.height = "100%"}
 PlotWeb(
   TL = TL,
   webTL = metaweb$metaweb,
@@ -306,4 +309,50 @@ mapview(st_to_plot, zcol = c("protocol", "nsampling", "med_richness",
 ```
 
 ---
+class: inverse, middle, center 
+
+# Environment 
+
+---
+
+```{r, out.width="100%", fig.retina = 3}
+evt_to_keep <- c(
+  "dist_up_km", "ord_stra", "ord_flow",
+  "ele_mt_cav", "tmp_dc_cyr", "dis_m3_pyr",
+  "hft_ix_c93", "for_pc_cse", "crp_pc_cse")
+
+riveratlas_station %>%
+  st_drop_geometry() %>%
+  mutate(across(c(tmp_dc_cyr, hft_ix_c93), ~ . / 10)) %>%
+  pivot_longer(-c(hyriv_id, riverid, station),
+    names_to = "metric", values_to = "value") %>%
+  filter(metric %in% evt_to_keep) %>%
+  mutate(metric = str_replace_all(metric, setNames(names(ti), ti))) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(vars(metric), scales = "free", ncol = 3,
+    labeller = label_wrap_gen(width = 25, multi_line = TRUE)
+  )
+```
+
+---
+
+# Thanks
+
+We are indebt to all the agents and professionals who monitored those
+communities and compiled this amazing dataset.
+
+Willem Bonnaffé originally developed the inference method:
+
+**Bonnaffé, W.**, Danet, A., Legendre, S. and Edeline, E. (2021), Comparison of
+size-structured and species-level trophic networks reveals antagonistic effects
+of temperature on vertical trophic diversity at the population and species
+level. Oikos, 130: 1297-1309. https://doi.org/10.1111/oik.08173
+ 
+Danet, A., Mouchet, M., **Bonnaffé, W.**, Thébault, E. & Fontaine, C. (2021) Species
+richness and food-web structure jointly drive community biomass and its
+temporal stability in fish communities. Ecology Letters, 24, 2364– 2377.
+https://doi.org/10.1111/ele.13857
+
+Many thanks to the Workshop organizers!
 
