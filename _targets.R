@@ -135,6 +135,58 @@ tar_plan(
     bm_std = biomass / surface
   )
     ),
+  tar_target(occ,{
+    n_op_st <- op_st_filtered$op %>%
+      group_by(station) %>%
+      summarise(nop = n())
+
+    com_species %>%
+      left_join(op_st_filtered$op[, c("station", "opcod")], by = "opcod") %>%
+      left_join(station_basin_dce, by = "station") %>%
+      group_by(station, species) %>%
+      summarise(occ = n(), .groups = "drop") %>%
+      left_join(n_op_st, by = "station") %>%
+      mutate(occ_prop = occ / nop)
+    }),
+  tar_target(occ_mat_basin, {
+    occ %>%
+      mutate(pres = occ_prop > .1) %>%
+      filter(pres) %>%
+      select(station, species, pres) %>%
+      pivot_wider(names_from = "species", values_from = "pres") %>%
+      mutate(across(where(is.logical), ~ ifelse(is.na(.), FALSE, .))) %>%
+      left_join(station_basin_dce, by = "station") %>%
+      select(basin, station, everything()) %>%
+      filter(!is.na(basin)) %>%
+      group_by(basin) %>%
+      nest() %>%
+      mutate(occ_mat = map(data,
+          function(x) {
+            mat_site_sp <- as.matrix(x[,!colnames(x) %in% "station"])
+            mat_sp <- apply(mat_site_sp, 2, as.numeric)
+            row.names(mat_sp) <- x$station
+            mat_sp
+          }
+          ))
+    }),
+  tar_target(beta_div,
+     occ_mat_basin %>%
+       mutate(
+         beta_tot = map(occ_mat, ~as_tibble(betapart::beta.multi(.x, index.family = "jaccard"))),
+         beta_pair = map(occ_mat, ~betapart::beta.pair(.x, index.family = "jaccard")),
+         beta_jac_st = map(beta_pair, ~enframe(colMeans(as.matrix(.x$beta.jac)), name = "station", value = "jaccard")),
+         beta_tu_st = map(beta_pair, ~enframe(colMeans(as.matrix(.x$beta.jtu)), name = "station", value = "turnover")),
+         beta_ne_st = map(beta_pair, ~enframe(colMeans(as.matrix(.x$beta.jne)), name = "station", value = "nestedness"))
+       ) %>%
+     select(-data, -occ_mat)
+    ),
+  tar_target(betadiv_site_by_basin,
+    station_basin_dce %>%
+      mutate(station = as.character(station)) %>%
+      left_join(do.call(rbind, beta_div$beta_jac_st), by = "station") %>%
+      left_join(do.call(rbind, beta_div$beta_tu_st), by = "station") %>%
+      left_join(do.call(rbind, beta_div$beta_ne_st), by = "station")
+    ),
 
   # Network metrics
   tar_target(com_trophic_species, {
@@ -265,6 +317,19 @@ tar_plan(
       janitor::clean_names() %>%
       left_join(select(st_drop_geometry(snapped_site_river), station, riverid), by = "riverid")
     }),
+  tar_target(basin_dce,{
+    load("~/Documents/post-these/mnhn/fishcom/data/the_8_hydrologic_basin.rda")
+    the_8_hydrologic_basin
+    }),
+  tar_target(station_basin_dce, {
+    intersect_st_basin <- st_intersects(op_st_filtered$station %>%
+      st_transform(crs = 2154),
+    basin_dce)
+    tibble(
+      station = op_st_filtered$station$station, 
+      basin = basin_dce$NomDistric[map_int(intersect_st_basin, ~.x[1])]
+    )
+    }),
 
   # report
   #tar_render(talk, "doc/slides.Rmd"),
@@ -274,7 +339,9 @@ tar_plan(
     save(fish_length, metaweb, network, com_species, com_metrics, com_trophic_species, network_mat, network_metrics, op_st_filtered, riveratlas_station,
       file = "~/Téléchargements/web_in_web.rda"
       )
+    save(station_basin_dce, file = "~/Téléchargements/station_basin_dce.rda")
+    save(betadiv_site_by_basin, file = "~/Téléchargements/betadiv_site_by_basin.rda")
     return("lololo") # trick for a happy targets
-    }, format = "file")
+    }),
 
 )

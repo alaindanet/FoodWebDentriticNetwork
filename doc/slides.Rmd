@@ -65,6 +65,9 @@ library(cowplot)
 library(sf)
 library(mapview)
 library(targets)
+lapply(list.files(here::here("R"), full.names = TRUE), source)
+source("https://raw.githubusercontent.com/alaindanet/fishcom/master/R/community_analysis.R")
+source("https://raw.githubusercontent.com/alaindanet/fishcom/master/R/codeWeb.R")
 ```
 
 
@@ -320,7 +323,9 @@ evt_to_keep <- c(
   "dist_up_km", "ord_stra", "ord_flow",
   "ele_mt_cav", "tmp_dc_cyr", "dis_m3_pyr",
   "hft_ix_c93", "for_pc_cse", "crp_pc_cse")
+ti <- c(get_river_atlas_significant_var(), get_land_class_var())
 
+tar_load(riveratlas_station)
 riveratlas_station %>%
   st_drop_geometry() %>%
   mutate(across(c(tmp_dc_cyr, hft_ix_c93), ~ . / 10)) %>%
@@ -334,6 +339,14 @@ riveratlas_station %>%
     labeller = label_wrap_gen(width = 25, multi_line = TRUE)
   )
 ```
+
+---
+
+# Code & data
+
+- Github repository (slides, network reconstruction, data filtering): [alaindanet/FoodWebDentriticNetwork](https://github.com/alaindanet/FoodWebDentriticNetwork) 
+- Network & Environmental data on the google drive
+
 
 ---
 
