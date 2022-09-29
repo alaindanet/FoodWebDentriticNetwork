@@ -43,9 +43,20 @@ ti <- rv_at %>%
   group_by(basin, ord_stra) %>%
   summarise(n = n())
 
-tar_load(c(com_species, op_st_filtered, station_basin_dce))
+tar_load(network_mat)
+network_mat %>%
+  mutate(
+    link = map_int(metrics, "Ltot")
+  )
 
+tar_load(c(com_species, op_st_filtered, station_basin_dce, betadiv_site_by_basin))
 
+10^0
+10^0.7
+10^1
+tar_load(st_basin_width_ord_sta)
 
-
+betadiv_site_by_basin_lg <- betadiv_site_by_basin %>%
+  left_join(st_basin_width_ord_sta, by = c("station", "basin")) %>%
+  pivot_longer(c(jaccard, turnover, nestedness), names_to = "betadiv", values_to = "value") 
 

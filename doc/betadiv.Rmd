@@ -1,0 +1,86 @@
+---
+title: "Betadiversity in dentritic network"
+author: "Alain Danet"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  word_document 
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, out.width = "100%")
+## target knits Rmds in their own session, so load libraries here.
+## source("here::here(packages.R"))
+library(cowplot)
+theme_set(theme_half_open())
+```
+
+```{r load-targets, include=FALSE}
+tar_load(c(p_beta_site_versus_all_ord_stra,
+p_beta_site_versus_all_width, p_beta_by_width, p_beta_site_by_stra
+))
+# tar_load(c(target_1, target_2, target_3))
+
+# # If your chunk output is shown in-line, then you'll need to wrap tar_load()
+# # like so:
+# 
+# withr::with_dir(here::here(), {
+#   tar_load(c(target_1, target_2, target_3))
+# })
+# 
+# # This is not needed when using tar_make() to render the document.
+```
+# Methods
+
+We aggregated community composition by site, considering that a species was
+present if it occurred in more than 10% of the sampling in a given site.
+
+Spatial dissimilarity was computed with the Jaccard index using `betapart` R
+package. We also computed partitions of the Jaccard dissimilarity index in
+nestedness (nested composition) and turnover (species replacement).
+
+# Betadiversity one site versus all 
+
+In this case, we computed average dissimilarity of each site with all the other
+sites in the each basin.
+
+```{r, fig.width = 10, fig.asp = .6}
+p_beta_site_versus_all_ord_stra
+p_beta_site_versus_all_width
+```
+
+# Betadiversity one site versus all
+
+In this case, we computed average dissimilarity among sites belonging to the
+same strahler order or to the same river width category. 
+
+```{r, fig.width = 11, fig.asp = .6}
+p_beta_site_by_stra
+p_beta_by_width +
+  theme(axis.text.x = element_text(angle = 20, hjust = 1))
+```
+
+## Reproducibility
+
+<details><summary>Reproducibility receipt</summary>
+
+```{r}
+## datetime
+Sys.time()
+
+## repository
+if(requireNamespace('git2r', quietly = TRUE)) {
+  git2r::repository()
+} else {
+  c(
+    system2("git", args = c("log", "--name-status", "-1"), stdout = TRUE),
+    system2("git", args = c("remote", "-v"), stdout = TRUE)
+  )
+}
+
+## session info
+sessionInfo()
+```
+
+</details>

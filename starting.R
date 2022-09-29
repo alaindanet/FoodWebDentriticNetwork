@@ -5,6 +5,7 @@ renv::snapshot()
 library(targets)
 library(tidyverse)
 library(magrittr)
+library(tflow)
 ##
 #Make datasets for the workshop
 dir.create("~/Téléchargements/NetworksInNetworks/data", recursive = TRUE)
@@ -60,7 +61,6 @@ unzip(zipfile = "~/Téléchargements/HydroRIVERS_v10_eu_shp.zip",
 unzip(zipfile = "~/Téléchargements/RiverATLAS_Data_v10_shp.zip",
   exdir = here::here("data-raw"))
 
-library(tflow)
 use_rmd("talk")
 dir.create(here::here("doc", "fig"))
 file.copy(
@@ -72,3 +72,5 @@ file.copy(
 
 library(devtools)
 use_r("variable_shortcut")
+use_rmd("betadiv")
+

@@ -187,6 +187,67 @@ tar_plan(
       left_join(do.call(rbind, beta_div$beta_tu_st), by = "station") %>%
       left_join(do.call(rbind, beta_div$beta_ne_st), by = "station")
     ),
+  tar_target(beta_by_stra,
+    beta_div %>%
+      select(basin, beta_pair) %>%
+      mutate(beta_by_stra = map(beta_pair, function(z) {
+          map2_dfr(z, names(beta_div$beta_pair[[1]]), function(x, y) {
+            x %>%
+              as.matrix() %>%
+              as.data.frame() %>%
+              rownames_to_column(var = "station1") %>%
+              pivot_longer(-station1, names_to = "station2", values_to = "beta") %>% # site pair lg df
+              left_join(st_basin_width_ord_sta %>% #get ord_stra for each station of the pair
+                  select(station1 = station, ord_stra1 = ord_stra),
+                  by = "station1") %>%
+              left_join(st_basin_width_ord_sta %>%
+                select(station2 = station, ord_stra2 = ord_stra),
+              by = "station2") %>%
+              filter(ord_stra1 == ord_stra2, station1 != station2) %>% #garder les pairs de meme ord stra mais station differentes
+              mutate(ord_stra = ord_stra1) %>%
+                group_by(ord_stra) %>% # Calculer les beta par stra_order
+                summarise(value = mean(beta)) %>%
+                  mutate(metric = y)
+})
+          })) %>%
+      select(basin, beta_by_stra) %>%
+      unnest(beta_by_stra) %>%
+      mutate(metric = str_replace_all(metric, c("beta.jtu" = "turnover", "beta.jne" = "nestedness", "beta.jac" = "jaccard")))
+    ),
+  tar_target(beta_by_width,
+    beta_div %>%
+      select(basin, beta_pair) %>%
+      mutate(beta_by_width = map(beta_pair, function(z) {
+          map2_dfr(z, names(beta_div$beta_pair[[1]]), function(x, y) {
+            x %>%
+              as.matrix() %>%
+              as.data.frame() %>%
+              rownames_to_column(var = "station1") %>%
+              pivot_longer(-station1, names_to = "station2", values_to = "beta") %>% # site pair lg df
+              left_join(st_basin_width_ord_sta %>% #get ord_stra for each station of the pair
+                select(station1 = station, mean.width_river_cat1 = mean.width_river_cat),
+                by = "station1") %>%
+              left_join(st_basin_width_ord_sta %>%
+                select(station2 = station, mean.width_river_cat2 = mean.width_river_cat),
+              by = "station2") %>%
+              filter(mean.width_river_cat1 == mean.width_river_cat2, station1 != station2) %>% #garder les pairs de meme ord stra mais station differentes
+              mutate(mean.width_river_cat = mean.width_river_cat1) %>%
+                group_by(mean.width_river_cat) %>% # Calculer les beta par stra_order
+                summarise(value = mean(beta)) %>%
+                  mutate(metric = y)
+})
+          })) %>%
+      select(basin, beta_by_width) %>%
+      unnest(beta_by_width) %>%
+      mutate(metric = str_replace_all(metric, c("beta.jtu" = "turnover", "beta.jne" = "nestedness", "beta.jac" = "jaccard")))
+
+    ),
+  # Betadiv site versus all other site 
+  tar_target(betadiv_site_by_basin_lg,
+    betadiv_site_by_basin %>%
+      left_join(st_basin_width_ord_sta, by = c("station", "basin")) %>%
+      pivot_longer(c(jaccard, turnover, nestedness), names_to = "betadiv", values_to = "value")
+    ),
 
   # Network metrics
   tar_target(com_trophic_species, {
@@ -330,6 +391,27 @@ tar_plan(
       basin = basin_dce$NomDistric[map_int(intersect_st_basin, ~.x[1])]
     )
     }),
+  tar_target(st_basin_width_ord_sta,
+    op_st_filtered$op_desc %>%
+      left_join(select(op_st_filtered$op, opcod, station), by = "opcod") %>%
+      group_by(station) %>%
+      summarise(
+        mean.width_river = mean(width_river)
+        ) %>%
+      left_join(station_basin_dce, by = "station") %>%
+      left_join(riveratlas_station %>%
+        select(station, ord_stra) %>%
+        st_drop_geometry(), by = "station") %>%
+      mutate(station = as.character(station)) %>%
+      mutate(
+        mean.width_river_cat = cut(mean.width_river,
+          c(0, 1, 2.5, 5, 10, 50, 100, 200, 400, 600)
+          ),
+        log10_mean.width_river = log10(mean.width_river),
+        log10_mean.width_river_cat = cut(log10_mean.width_river,
+          c(-1, 0, 1, 2, 3))
+      )
+    ),
 
   # report
   #tar_render(talk, "doc/slides.Rmd"),
@@ -343,5 +425,50 @@ tar_plan(
     save(betadiv_site_by_basin, file = "~/Téléchargements/betadiv_site_by_basin.rda")
     return("lololo") # trick for a happy targets
     }),
+
+  # Plots
+
+  ## Betadiv
+  tar_target(p_beta_site_versus_all_ord_stra,
+    betadiv_site_by_basin_lg %>%
+      ggplot(aes(y = value, x = ord_stra, color = basin)) +
+      geom_point() +
+      geom_jitter() +
+      geom_smooth(method = "lm", formula = as.formula(y ~ x + poly(x, 2))) +
+      facet_grid(cols = vars(betadiv)) +
+      theme(legend.position = "bottom")
+    ),
+  tar_target(p_beta_site_versus_all_width,
+    betadiv_site_by_basin_lg %>%
+      ggplot(aes(y = value, x = log(mean.width_river), color = basin)) +
+      geom_point() +
+      geom_jitter() +
+      geom_smooth(method = "lm", formula = as.formula(y ~ x + poly(x, 2))) +
+      facet_grid(cols = vars(betadiv)) +
+      theme(legend.position = "bottom")
+    ),
+  tar_target(p_beta_site_by_stra,
+    beta_by_stra %>%
+      ggplot(aes(y = value, x = ord_stra, color = basin)) +
+      geom_point() +
+      geom_jitter() +
+      geom_smooth(method = "lm", formula = as.formula(y ~ x + poly(x, 2))) +
+      facet_grid(cols = vars(metric)) +
+      theme(legend.position = "bottom")
+    ),
+  tar_target(p_beta_by_width,
+    beta_by_width %>%
+      ggplot(aes(y = value, x = as.numeric(mean.width_river_cat), color = basin)) +
+      geom_point() +
+      geom_jitter() +
+      geom_smooth(method = "lm", formula = as.formula(y ~ x + poly(x, 2))) +
+      facet_grid(cols = vars(metric)) +
+      theme(legend.position = "bottom") +
+      scale_x_continuous(
+        name = "River width category (m)",
+        breaks = seq_len(length(levels(beta_by_width$mean.width_river_cat))),
+        labels = levels(beta_by_width$mean.width_river_cat)
+      )
+    )
 
 )
