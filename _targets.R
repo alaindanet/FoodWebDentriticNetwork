@@ -205,9 +205,7 @@ tar_plan(
               by = "station2") %>%
               filter(ord_stra1 == ord_stra2, station1 != station2) %>% #garder les pairs de meme ord stra mais station differentes
               mutate(ord_stra = ord_stra1) %>%
-                group_by(ord_stra) %>% # Calculer les beta par stra_order
-                summarise(value = mean(beta)) %>%
-                  mutate(metric = y)
+                mutate(metric = y)
 })
           })) %>%
       select(basin, beta_by_stra) %>%
@@ -232,9 +230,7 @@ tar_plan(
               by = "station2") %>%
               filter(mean.width_river_cat1 == mean.width_river_cat2, station1 != station2) %>% #garder les pairs de meme ord stra mais station differentes
               mutate(mean.width_river_cat = mean.width_river_cat1) %>%
-                group_by(mean.width_river_cat) %>% # Calculer les beta par stra_order
-                summarise(value = mean(beta)) %>%
-                  mutate(metric = y)
+                mutate(metric = y)
 })
           })) %>%
       select(basin, beta_by_width) %>%
@@ -415,6 +411,8 @@ tar_plan(
 
   # report
   #tar_render(talk, "doc/slides.Rmd"),
+  tar_render(betadiv_report, "doc/betadiv.Rmd"),
+
 
   #export
   tar_target(export, {
@@ -449,7 +447,8 @@ tar_plan(
     ),
   tar_target(p_beta_site_by_stra,
     beta_by_stra %>%
-      ggplot(aes(y = value, x = ord_stra, color = basin)) +
+      sample_n(2556) %>%
+      ggplot(aes(y = beta, x = ord_stra, color = basin)) +
       geom_point() +
       geom_jitter() +
       geom_smooth(method = "lm", formula = as.formula(y ~ x + poly(x, 2))) +
@@ -458,7 +457,8 @@ tar_plan(
     ),
   tar_target(p_beta_by_width,
     beta_by_width %>%
-      ggplot(aes(y = value, x = as.numeric(mean.width_river_cat), color = basin)) +
+      sample_n(2556) %>%
+      ggplot(aes(y = beta, x = as.numeric(mean.width_river_cat), color = basin)) +
       geom_point() +
       geom_jitter() +
       geom_smooth(method = "lm", formula = as.formula(y ~ x + poly(x, 2))) +

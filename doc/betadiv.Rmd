@@ -9,7 +9,10 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = FALSE, out.width = "100%")
+  echo = FALSE,
+  out.width = "100%",
+  message = FALSE,
+  warning = FALSE)
 ## target knits Rmds in their own session, so load libraries here.
 ## source("here::here(packages.R"))
 library(cowplot)
@@ -50,9 +53,9 @@ p_beta_site_versus_all_ord_stra
 p_beta_site_versus_all_width
 ```
 
-# Betadiversity one site versus all
+# Betadiversity by group 
 
-In this case, we computed average dissimilarity among sites belonging to the
+In this case, we report dissimilarity among sites belonging to the
 same strahler order or to the same river width category. 
 
 ```{r, fig.width = 11, fig.asp = .6}
